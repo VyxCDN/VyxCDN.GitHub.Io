@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vyx CDN – публичная статика</title>
+    <style>
+        body { font-family: system-ui, sans-serif; max-width: 1200px; margin: 2rem auto; padding: 0 1rem; background: #0d0f12; color: #eef; }
+        h1, h2 { border-bottom: 1px solid #2a2e35; padding-bottom: 0.3rem; }
+        .category { margin-bottom: 2.5rem; }
+        .files { display: flex; flex-wrap: wrap; gap: 1rem; align-items: flex-start; }
+        .file-card {
+            background: #1a1d24;
+            border-radius: 12px;
+            padding: 0.75rem;
+            width: 140px;
+            text-align: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            transition: 0.1s;
+        }
+        .file-card:hover { transform: translateY(-2px); background: #22262e; }
+        .file-card a { text-decoration: none; color: #6bc0ff; word-break: break-all; font-size: 0.8rem; }
+        .file-card img, .file-card video, .file-card audio {
+            max-width: 100%;
+            max-height: 80px;
+            border-radius: 8px;
+            object-fit: contain;
+            background: #00000055;
+        }
+        .file-card .file-name { margin-top: 8px; font-size: 0.75rem; opacity: 0.8; }
+        .copy-btn {
+            background: #2a2f38;
+            border: none;
+            color: white;
+            border-radius: 20px;
+            padding: 4px 8px;
+            margin-top: 8px;
+            font-size: 0.7rem;
+            cursor: pointer;
+            transition: 0.1s;
+        }
+        .copy-btn:hover { background: #3a404c; }
+        .toast {
+            position: fixed; bottom: 20px; right: 20px;
+            background: #1e2a3a; color: #bbf0ff;
+            padding: 8px 16px; border-radius: 40px;
+            font-size: 0.8rem; opacity: 0; transition: 0.2s;
+            pointer-events: none; z-index: 1000;
+        }
+        .toast.show { opacity: 1; }
+        .badge { font-size: 0.7rem; background: #2e3b2e; display: inline-block; padding: 2px 6px; border-radius: 20px; margin-left: 8px; }
+    </style>
+</head>
+<body>
+    <h1>📦 Vyx CDN <span class="badge">pub</span></h1>
+    <p>Публичные файлы из папок <code>icon/</code>, <code>flag/</code>, <code>social/</code>. Нажми на кнопку, чтобы скопировать прямую ссылку.</p>
+
+    <!-- Контейнеры для каждой категории -->
+    <div id="content"></div>
+
+    <div id="toast" class="toast">🔗 Скопировано!</div>
+
+    <script>
+        // Данные от Jekyll – мы передадим их через JSON, который создаст Liquid
+        const filesByCat = {
+            icon: {{ site.static_files | where_exp: "file", "file.path contains '/icon/'" | map: "path" | jsonify }},
+            flag: {{ site.static_files | where_exp: "file", "file.path contains '/flag/'" | map: "path" | jsonify }},
+            social: {{ site.static_files | where_exp: "file", "file.path contains '/social/'" | map: "path" | jsonify }}
+        };
+
+        function getFileExtension(filename) {
+            return filename.split('.').pop().toLowerCase();
+        }
+
+        function isPreviewable(ext) {
+            return ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp'].includes(ext);
+        }
+
+        function isVideo(ext) {
+            return ['mp4', 'webm', 'mov', 'ogv'].includes(ext);
+        }
+
+        function isAudio(ext) {
+            return ['mp3', 'wav', 'ogg', 'flac', 'm4a'].includes(ext);
+        }
+
+        function renderPreview(filePath) {
+            const ext = getFileExtension(filePath);
+            const baseUrl = filePath; // Jekyll даёт путь типа /icon/plus.svg
+            if (isPreviewable(ext)) {
+                return `<img src="${baseUrl}" loading="lazy" alt="preview" onerror="this.style.display='none'">`;
+            } else if (isVideo(ext)) {
+                return `<video src="${baseUrl}" controls preload="none" style="max-height:80px"></video>`;
+            } else if (isAudio(ext)) {
+                return `<audio src="${baseUrl}" controls style="width:120px; height:32px"></audio>`;
+            } else {
+                // для шрифтов, скриптов, архива и т.д. показываем иконку файла
+                return `<div style="font-size: 2rem;">📄</div>`;
+            }
+        }
+
+        function copyToClipboard(url) {
+            navigator.clipboard.writeText(url).then(() => {
+                const toast = document.getElementById('toast');
+                toast.classList.add('show');
+                setTimeout(() => toast.classList.remove('show'), 1500);
+            });
+        }
+
+        function buildPage() {
+            const container = document.getElementById('content');
+            container.innerHTML = '';
+
+            const categories = [
+                { name: '🖼️ Icons', key: 'icon' },
+                { name: '🏳️ Flags', key: 'flag' },
+                { name: '📱 Social', key: 'social' }
+            ];
+
+            for (const cat of categories) {
+                const files = filesByCat[cat.key];
+                if (!files || files.length === 0) continue;
+
+                const section = document.createElement('div');
+                section.className = 'category';
+                section.innerHTML = `<h2>${cat.name} (${files.length})</h2><div class="files"></div>`;
+                const filesDiv = section.querySelector('.files');
+
+                for (const filePath of files.sort()) {
+                    const fileName = filePath.split('/').pop();
+                    const absoluteUrl = window.location.origin + filePath;
+
+                    const card = document.createElement('div');
+                    card.className = 'file-card';
+                    card.innerHTML = `
+                        <div style="min-height: 90px; display: flex; align-items: center; justify-content: center;">
+                            ${renderPreview(filePath)}
+                        </div>
+                        <div class="file-name" title="${fileName}">${fileName.substring(0, 25)}${fileName.length>25 ? '…' : ''}</div>
+                        <button class="copy-btn" data-url="${absoluteUrl}">📋 Копировать ссылку</button>
+                        <div style="margin-top: 6px;"><a href="${filePath}" download="${fileName}">⬇️ Скачать</a></div>
+                    `;
+                    filesDiv.appendChild(card);
+                }
+
+                container.appendChild(section);
+            }
+
+            // Вешаем обработчики на кнопки копирования
+            document.querySelectorAll('.copy-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const url = btn.getAttribute('data-url');
+                    copyToClipboard(url);
+                });
+            });
+        }
+
+        buildPage();
+    </script>
+</body>
+</html>

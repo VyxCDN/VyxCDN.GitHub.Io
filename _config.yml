@@ -1,0 +1,12 @@
+# _config.yml
+include:
+  - icon
+  - flag
+  - social
+  - favicon
+  - logo
+  - CNAME
+
+# Отключаем всё, что нам не нужно
+theme: null
+plugins: []
