@@ -1,12 +1,10 @@
-# _config.yml
 include:
   - icon
   - flag
   - social
   - favicon
   - logo
+  - assets
   - CNAME
-
-# Отключаем всё, что нам не нужно
 theme: null
 plugins: []

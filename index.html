@@ -5,9 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Vyx CDN – публичная статика</title>
     <style>
-        body { font-family: system-ui, sans-serif; max-width: 1200px; margin: 2rem auto; padding: 0 1rem; background: #0d0f12; color: #eef; }
+        body { font-family: system-ui, sans-serif; max-width: 1300px; margin: 2rem auto; padding: 0 1rem; background: #0d0f12; color: #eef; }
         h1, h2 { border-bottom: 1px solid #2a2e35; padding-bottom: 0.3rem; }
         .category { margin-bottom: 2.5rem; }
+        .subcat { margin-left: 1rem; margin-top: 1rem; }
+        .subcat h3 { font-size: 1.2rem; color: #bbd; margin-bottom: 0.5rem; }
         .files { display: flex; flex-wrap: wrap; gap: 1rem; align-items: flex-start; }
         .file-card {
             background: #1a1d24;
@@ -27,7 +29,7 @@
             object-fit: contain;
             background: #00000055;
         }
-        .file-card .file-name { margin-top: 8px; font-size: 0.75rem; opacity: 0.8; }
+        .file-name { margin-top: 8px; font-size: 0.75rem; opacity: 0.8; word-break: break-word; }
         .copy-btn {
             background: #2a2f38;
             border: none;
@@ -37,7 +39,6 @@
             margin-top: 8px;
             font-size: 0.7rem;
             cursor: pointer;
-            transition: 0.1s;
         }
         .copy-btn:hover { background: #3a404c; }
         .toast {
@@ -53,20 +54,16 @@
 </head>
 <body>
     <h1>📦 Vyx CDN <span class="badge">pub</span></h1>
-    <p>Публичные файлы из папок <code>icon/</code>, <code>flag/</code>, <code>social/</code>. Нажми на кнопку, чтобы скопировать прямую ссылку.</p>
+    <p>Публичные файлы из <code>icon/</code> (с подпапками), <code>flag/</code>, <code>social/</code>.</p>
 
-    <!-- Контейнеры для каждой категории -->
     <div id="content"></div>
-
     <div id="toast" class="toast">🔗 Скопировано!</div>
 
     <script>
-        // Данные от Jekyll – мы передадим их через JSON, который создаст Liquid
-        const filesByCat = {
-            icon: {{ site.static_files | where_exp: "file", "file.path contains '/icon/'" | map: "path" | jsonify }},
-            flag: {{ site.static_files | where_exp: "file", "file.path contains '/flag/'" | map: "path" | jsonify }},
-            social: {{ site.static_files | where_exp: "file", "file.path contains '/social/'" | map: "path" | jsonify }}
-        };
+        // Получаем списки файлов от Jekyll (рекурсивно, полные пути)
+        const allIcons = {{ site.static_files | where_exp: "file", "file.path contains '/icon/'" | map: "path" | jsonify }};
+        const allFlags = {{ site.static_files | where_exp: "file", "file.path contains '/flag/'" | map: "path" | jsonify }};
+        const allSocial = {{ site.static_files | where_exp: "file", "file.path contains '/social/'" | map: "path" | jsonify }};
 
         function getFileExtension(filename) {
             return filename.split('.').pop().toLowerCase();
@@ -86,15 +83,13 @@
 
         function renderPreview(filePath) {
             const ext = getFileExtension(filePath);
-            const baseUrl = filePath; // Jekyll даёт путь типа /icon/plus.svg
             if (isPreviewable(ext)) {
-                return `<img src="${baseUrl}" loading="lazy" alt="preview" onerror="this.style.display='none'">`;
+                return `<img src="${filePath}" loading="lazy" alt="preview" onerror="this.style.display='none'" style="max-height:80px">`;
             } else if (isVideo(ext)) {
-                return `<video src="${baseUrl}" controls preload="none" style="max-height:80px"></video>`;
+                return `<video src="${filePath}" controls preload="none" style="max-height:80px"></video>`;
             } else if (isAudio(ext)) {
-                return `<audio src="${baseUrl}" controls style="width:120px; height:32px"></audio>`;
+                return `<audio src="${filePath}" controls style="width:120px; height:32px"></audio>`;
             } else {
-                // для шрифтов, скриптов, архива и т.д. показываем иконку файла
                 return `<div style="font-size: 2rem;">📄</div>`;
             }
         }
@@ -107,53 +102,101 @@
             });
         }
 
+        // Группировка файлов icon по подпапкам (например, "outline", "filled", или корень)
+        function groupIconFiles(iconPaths) {
+            const groups = new Map(); // key = подпапка (или "root"), value = массив путей
+            for (const path of iconPaths) {
+                // путь вида "/icon/outline/plus.svg" или "/icon/filled/star.svg"
+                const parts = path.split('/').filter(p => p);
+                // parts = ["icon", "outline", "plus.svg"] или ["icon", "plus.svg"]
+                if (parts.length >= 3) {
+                    const subfolder = parts[1]; // "outline" или "filled"
+                    if (!groups.has(subfolder)) groups.set(subfolder, []);
+                    groups.get(subfolder).push(path);
+                } else if (parts.length === 2) {
+                    // файл прямо в корне icon/
+                    if (!groups.has('root')) groups.set('root', []);
+                    groups.get('root').push(path);
+                }
+            }
+            return groups;
+        }
+
+        function renderFileCard(filePath) {
+            const fileName = filePath.split('/').pop();
+            const absoluteUrl = window.location.origin + filePath;
+            const card = document.createElement('div');
+            card.className = 'file-card';
+            card.innerHTML = `
+                <div style="min-height: 90px; display: flex; align-items: center; justify-content: center;">
+                    ${renderPreview(filePath)}
+                </div>
+                <div class="file-name" title="${fileName}">${fileName.substring(0, 25)}${fileName.length>25 ? '…' : ''}</div>
+                <button class="copy-btn" data-url="${absoluteUrl}">📋 Копировать ссылку</button>
+                <div style="margin-top: 6px;"><a href="${filePath}" download="${fileName}">⬇️ Скачать</a></div>
+            `;
+            const btn = card.querySelector('.copy-btn');
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                copyToClipboard(btn.getAttribute('data-url'));
+            });
+            return card;
+        }
+
         function buildPage() {
             const container = document.getElementById('content');
             container.innerHTML = '';
 
-            const categories = [
-                { name: '🖼️ Icons', key: 'icon' },
-                { name: '🏳️ Flags', key: 'flag' },
-                { name: '📱 Social', key: 'social' }
-            ];
-
-            for (const cat of categories) {
-                const files = filesByCat[cat.key];
-                if (!files || files.length === 0) continue;
-
-                const section = document.createElement('div');
-                section.className = 'category';
-                section.innerHTML = `<h2>${cat.name} (${files.length})</h2><div class="files"></div>`;
-                const filesDiv = section.querySelector('.files');
-
-                for (const filePath of files.sort()) {
-                    const fileName = filePath.split('/').pop();
-                    const absoluteUrl = window.location.origin + filePath;
-
-                    const card = document.createElement('div');
-                    card.className = 'file-card';
-                    card.innerHTML = `
-                        <div style="min-height: 90px; display: flex; align-items: center; justify-content: center;">
-                            ${renderPreview(filePath)}
-                        </div>
-                        <div class="file-name" title="${fileName}">${fileName.substring(0, 25)}${fileName.length>25 ? '…' : ''}</div>
-                        <button class="copy-btn" data-url="${absoluteUrl}">📋 Копировать ссылку</button>
-                        <div style="margin-top: 6px;"><a href="${filePath}" download="${fileName}">⬇️ Скачать</a></div>
-                    `;
-                    filesDiv.appendChild(card);
-                }
-
-                container.appendChild(section);
+            // ----- Флаги -----
+            if (allFlags.length) {
+                const flagsSection = document.createElement('div');
+                flagsSection.className = 'category';
+                flagsSection.innerHTML = `<h2>🏳️ Флаги (${allFlags.length})</h2><div class="files"></div>`;
+                const filesDiv = flagsSection.querySelector('.files');
+                allFlags.sort().forEach(path => filesDiv.appendChild(renderFileCard(path)));
+                container.appendChild(flagsSection);
             }
 
-            // Вешаем обработчики на кнопки копирования
-            document.querySelectorAll('.copy-btn').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    const url = btn.getAttribute('data-url');
-                    copyToClipboard(url);
+            // ----- Иконки (с группировкой по подпапкам) -----
+            if (allIcons.length) {
+                const iconsSection = document.createElement('div');
+                iconsSection.className = 'category';
+                iconsSection.innerHTML = `<h2>🖼️ Иконки (${allIcons.length})</h2>`;
+                container.appendChild(iconsSection);
+
+                const groups = groupIconFiles(allIcons);
+                // Сортируем названия подпапок: сначала "root" (если есть), потом "filled", "outline" и т.д.
+                const groupNames = Array.from(groups.keys()).sort((a,b) => {
+                    if (a === 'root') return -1;
+                    if (b === 'root') return 1;
+                    return a.localeCompare(b);
                 });
-            });
+
+                for (const groupName of groupNames) {
+                    const files = groups.get(groupName);
+                    const subDiv = document.createElement('div');
+                    subDiv.className = 'subcat';
+                    const displayName = groupName === 'root' ? 'Корень icon/' : groupName;
+                    subDiv.innerHTML = `<h3>📁 ${displayName} (${files.length})</h3><div class="files"></div>`;
+                    const filesDiv = subDiv.querySelector('.files');
+                    files.sort().forEach(path => filesDiv.appendChild(renderFileCard(path)));
+                    iconsSection.appendChild(subDiv);
+                }
+            }
+
+            // ----- Соцсети -----
+            if (allSocial.length) {
+                const socialSection = document.createElement('div');
+                socialSection.className = 'category';
+                socialSection.innerHTML = `<h2>📱 Соцсети (${allSocial.length})</h2><div class="files"></div>`;
+                const filesDiv = socialSection.querySelector('.files');
+                allSocial.sort().forEach(path => filesDiv.appendChild(renderFileCard(path)));
+                container.appendChild(socialSection);
+            }
+
+            if (!allIcons.length && !allFlags.length && !allSocial.length) {
+                container.innerHTML = '<p>⚠️ Публичные папки пока пусты. Добавь файлы в <code>icon/</code>, <code>flag/</code> или <code>social/</code>.</p>';
+            }
         }
 
         buildPage();
