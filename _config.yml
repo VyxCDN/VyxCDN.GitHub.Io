@@ -5,6 +5,6 @@ include:
   - favicon
   - logo
   - assets
-  - CNAME
+  - vyxicon
 theme: null
 plugins: []
