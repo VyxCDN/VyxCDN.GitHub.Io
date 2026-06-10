@@ -1,0 +1,23 @@
+{
+  "title": "Vyx CDN – statique publique",
+  "description": "Fichiers publics des dossiers icon/, flag/, social/.",
+  "flags": "Drapeaux",
+  "icons": "Icônes",
+  "social": "Réseaux sociaux",
+  "root_icon": "Racine icon/",
+  "copy_btn": "📋 Copier le lien",
+  "download_btn": "⬇️ Télécharger",
+  "toast_copied": "🔗 Copié !",
+  "loading": "⏳ Chargement des fichiers...",
+  "empty": "⚠️ Les dossiers publics sont vides. Ajoutez des fichiers dans icon/, flag/ ou social/.",
+  "error_load": "❌ Erreur de chargement :",
+  "check_connection": "Vérifiez la connexion ou le nom du dépôt.",
+  "404_title": "404",
+  "404_sub": "Page non trouvée",
+  "404_text": "Le fichier ou dossier demandé n'existe pas sur le CDN. L'URL est peut-être incorrecte ou le fichier n'est pas public.",
+  "500_title": "500",
+  "500_sub": "Erreur interne du serveur",
+  "500_text": "Une panne est survenue côté CDN ou API GitHub. Veuillez recharger la page plus tard.",
+  "back_home": "← Retour à l'accueil du CDN",
+  "footer_note": "Vyx CDN — fichiers publics depuis /icon/, /flag/, /social/"
+}

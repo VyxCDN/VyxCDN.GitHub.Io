@@ -1,0 +1,23 @@
+{
+  "title": "Vyx CDN – 公共靜態資源",
+  "description": "來自 icon/、flag/、social/ 資料夾的公共檔案。",
+  "flags": "旗幟",
+  "icons": "圖示",
+  "social": "社交",
+  "root_icon": "icon/ 根目錄",
+  "copy_btn": "📋 複製連結",
+  "download_btn": "⬇️ 下載",
+  "toast_copied": "🔗 已複製！",
+  "loading": "⏳ 載入檔案中...",
+  "empty": "⚠️ 公共資料夾為空。請向 icon/、flag/ 或 social/ 新增檔案。",
+  "error_load": "❌ 載入錯誤：",
+  "check_connection": "請檢查網路連線或儲存庫名稱。",
+  "404_title": "404",
+  "404_sub": "頁面未找到",
+  "404_text": "請求的檔案或資料夾在 CDN 上不存在。可能是 URL 錯誤或該檔案非公開。",
+  "500_title": "500",
+  "500_sub": "伺服器內部錯誤",
+  "500_text": "CDN 或 GitHub API 端發生故障。請稍後重新載入頁面。",
+  "back_home": "← 返回 CDN 主頁",
+  "footer_note": "Vyx CDN — 公共檔案來自 /icon/、/flag/、/social/"
+}

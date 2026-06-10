@@ -1,0 +1,23 @@
+{
+  "title": "Vyx CDN – öffentliche statische Dateien",
+  "description": "Öffentliche Dateien aus den Ordnern icon/, flag/, social/.",
+  "flags": "Flaggen",
+  "icons": "Symbole",
+  "social": "Soziale Netzwerke",
+  "root_icon": "Stammverzeichnis icon/",
+  "copy_btn": "📋 Link kopieren",
+  "download_btn": "⬇️ Herunterladen",
+  "toast_copied": "🔗 Kopiert!",
+  "loading": "⏳ Lade Dateien...",
+  "empty": "⚠️ Öffentliche Ordner sind leer. Füge Dateien in icon/, flag/ oder social/ ein.",
+  "error_load": "❌ Fehler beim Laden:",
+  "check_connection": "Überprüfe die Verbindung oder den Repository-Namen.",
+  "404_title": "404",
+  "404_sub": "Seite nicht gefunden",
+  "404_text": "Die angeforderte Datei oder der Ordner ist auf dem CDN nicht vorhanden. Möglicherweise ist die URL falsch oder die Datei ist nicht öffentlich.",
+  "500_title": "500",
+  "500_sub": "Interner Serverfehler",
+  "500_text": "Auf dem CDN oder der GitHub-API ist ein Fehler aufgetreten. Bitte lade die Seite später neu.",
+  "back_home": "← Zurück zur CDN-Startseite",
+  "footer_note": "Vyx CDN — öffentliche Dateien aus /icon/, /flag/, /social/"
+}
